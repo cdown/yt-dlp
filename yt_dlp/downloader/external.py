@@ -24,6 +24,7 @@ from ..utils import (
     check_executable,
     Popen,
     remove_end,
+    sleep_exponential,
 )
 
 
@@ -124,6 +125,7 @@ class ExternalFD(FragmentFD):
 
         fragment_retries = self.params.get('fragment_retries', 0)
         skip_unavailable_fragments = self.params.get('skip_unavailable_fragments', True)
+        exponential_backoff = self.params.get('exponential_backoff', 0)
 
         count = 0
         while count <= fragment_retries:
@@ -134,6 +136,7 @@ class ExternalFD(FragmentFD):
             # TODO: Decide whether to retry based on error code
             # https://aria2.github.io/manual/en/html/aria2c.html#exit-status
             self.to_stderr(stderr.decode('utf-8', 'replace'))
+            sleep_exponential(exponential_backoff, count)
             count += 1
             if count <= fragment_retries:
                 self.to_screen(

@@ -25,6 +25,7 @@ from ..utils import (
     error_to_compat_str,
     encodeFilename,
     sanitized_Request,
+    sleep_exponential,
 )
 
 
@@ -45,6 +46,9 @@ class FragmentFD(FileDownloader):
 
     fragment_retries:   Number of times to retry a fragment for HTTP error (DASH
                         and hlsnative only)
+    exponential_backoff:
+                        The number of seconds to start with when doing exponential
+                        backoff for fragment retries.
     skip_unavailable_fragments:
                         Skip unavailable fragments (DASH and hlsnative only)
     keep_fragments:     Keep downloaded fragments on disk after downloading is
@@ -423,6 +427,7 @@ class FragmentFD(FileDownloader):
             interrupt_trigger = (True, )
 
         fragment_retries = self.params.get('fragment_retries', 0)
+        exponential_backoff = self.params.get('exponential_backoff', 0)
         is_fatal = (
             ((lambda _: False) if info_dict.get('is_live') else (lambda idx: idx == 0))
             if self.params.get('skip_unavailable_fragments', True) else (lambda _: True))
@@ -454,6 +459,7 @@ class FragmentFD(FileDownloader):
                     # First we try to retry then either skip or abort.
                     # See https://github.com/ytdl-org/youtube-dl/issues/10165,
                     # https://github.com/ytdl-org/youtube-dl/issues/10448).
+                    sleep_exponential(exponential_backoff, count)
                     count += 1
                     ctx['last_error'] = err
                     if count <= fragment_retries:

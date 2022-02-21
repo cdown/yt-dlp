@@ -5382,3 +5382,8 @@ class WebSocketsWrapper():
 
 
 has_websockets = bool(compat_websockets)
+
+
+def sleep_exponential(initial_delay_secs, attempt_nr):
+    if initial_delay_secs:
+        time.sleep(initial_delay_secs * 1.5 ** attempt_nr)
